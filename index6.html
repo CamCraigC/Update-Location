@@ -8,7 +8,7 @@
     </style>
   </head>
   <body>
-    <h1>Acquiring Your Location...no cors</h1>
+    <h1>Acquiring Your Location...</h1>
     <p id="status">Please wait while we update your record.</p>
     <h3>Your Location Details:</h3>
     <pre id="location-output"></pre> <!-- Displays latitude and longitude -->
@@ -31,13 +31,14 @@
             // Display the location details on the screen
             document.getElementById('location-output').innerText = `Latitude: ${latitude}\nLongitude: ${longitude}`;
 
-            // Construct the Method:CRM API endpoint URL with the recordId in the path.
-            const updateEndpoint = `https://rest.method.me/api/v1/tables/CustomSchedule/${recordId}`;
+            // Construct the CORS Anywhere endpoint
+            const corsAnywhere = 'https://cors-anywhere.herokuapp.com/';
+            const updateEndpoint = `${corsAnywhere}https://rest.method.me/api/v1/tables/CustomSchedule/${recordId}`;
 
             // Create the JSON payload to be sent
             const payload = {
-                ActualStartLatitude: latitude.toString(),
-                ActualStartLongitude: longitude.toString()
+              ActualStartLatitude: latitude.toString(),
+              ActualStartLongitude: longitude.toString()
             };
 
             // Display the JSON payload on the webpage
@@ -46,41 +47,42 @@
             // Make the PATCH request to update the record.
             fetch(updateEndpoint, {
               method: 'PATCH',
-              mode: 'no-cors',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `APIKey ${authCode}` // Use the authorization code passed dynamically
+                'Authorization': `APIKey ${authCode}`,
+                'X-Requested-With': 'XMLHttpRequest' // Added header required by cors-anywhere
               },
               body: JSON.stringify(payload) // Send the payload
             })
             .then(response => {
-              console.log('Raw Response:', response); // Log the raw response for debugging
+              console.log('Response Status:', response.status); // Log the HTTP status code
 
-              // Handle success or show errors if present
+              // Check if the response is successful
               if (response.status === 204) {
+                document.getElementById('status').innerText = 'Record updated successfully!';
                 window.close(); // Close the page on success
               } else {
                 return response.json()
                   .then(data => {
                     console.error('API Error:', data);
-                    document.getElementById('status').innerText = 'Error updating record.';
+                    document.getElementById('status').innerText = `Error updating record: ${JSON.stringify(data, null, 2)}`;
                   })
                   .catch(() => {
                     response.text().then(text => {
-                      console.log('Text Response:', text);
-                      document.getElementById('status').innerText = 'Error updating record: ' + text;
+                      console.error('Response Text:', text); // Log non-JSON response
+                      document.getElementById('status').innerText = `Error updating record: ${text}`;
                     });
                   });
               }
             })
             .catch(error => {
-              console.error('Error updating record:', error);
-              document.getElementById('status').innerText = 'Error updating record.';
+              console.error('Fetch Error:', error);
+              document.getElementById('status').innerText = 'Error: Unable to update record.';
             });
           },
           (error) => {
             console.error('Error obtaining location:', error);
-            document.getElementById('status').innerText = 'Error obtaining location: ' + error.message;
+            document.getElementById('status').innerText = `Error obtaining location: ${error.message}`;
           },
           {
             enableHighAccuracy: true,
