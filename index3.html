@@ -46,6 +46,7 @@
             // Make the PATCH request to update the record.
             fetch(updateEndpoint, {
               method: 'PATCH',
+              mode:'no-cors',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `APIKey ${authCode}` // Use the authorization code passed dynamically
