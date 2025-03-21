@@ -8,7 +8,7 @@
     </style>
   </head>
   <body>
-    <h1>Acquiring Your Location...</h1>
+    <h1>Acquiring Your Location...no cors</h1>
     <p id="status">Please wait while we update your record.</p>
     <h3>Your Location Details:</h3>
     <pre id="location-output"></pre> <!-- Displays latitude and longitude -->
@@ -46,6 +46,7 @@
             // Make the PATCH request to update the record.
             fetch(updateEndpoint, {
               method: 'PATCH',
+              mode: 'no-cors',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `APIKey ${authCode}` // Use the authorization code passed dynamically
