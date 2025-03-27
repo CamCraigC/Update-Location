@@ -4,9 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Updating Your Location</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    h1, p {
+      margin: 10px;
+    }
+    #location-details {
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Acquiring Your Location...</h1>
+  <h1>Updating Your Location...</h1>
   <p id="status">Please wait while we update your location.</p>
 
   <div id="location-details" style="display: none;">
@@ -55,44 +73,44 @@
               // Successful response from Render API
               const data = await response.json();
               console.log('Success:', data);
-
-              // Navigate back to the app using fallbackUrl
-              if (fallbackUrl) {
-                window.location.href = fallbackUrl;
-              } else {
-                document.getElementById('status').innerText = 'Record updated successfully!';
-              }
+              document.getElementById('status').innerText = 'Record updated successfully!';
+              setTimeout(() => {
+                if (fallbackUrl) {
+                  window.location.href = fallbackUrl;
+                }
+              }, 3000); // Redirect after 3 seconds
             } else {
               // Handle API errors
               const errorText = await response.text();
               console.error('Error updating record:', errorText);
-
-              // Navigate back to the app with fallbackUrl on error
-              if (fallbackUrl) {
-                window.location.href = fallbackUrl;
-              } else {
-                document.getElementById('status').innerText = `Error updating record: ${errorText}`;
-              }
+              document.getElementById('status').innerText = `Error updating record: ${errorText}`;
+              setTimeout(() => {
+                if (fallbackUrl) {
+                  window.location.href = fallbackUrl;
+                }
+              }, 5000); // Redirect after 5 seconds
             }
           })
           .catch((error) => {
             // Handle network or fetch errors
             console.error('Fetch error:', error);
-            if (fallbackUrl) {
-              window.location.href = fallbackUrl;
-            } else {
-              document.getElementById('status').innerText = `Error: Unable to update record (${error.message})`;
-            }
+            document.getElementById('status').innerText = `Error: Unable to update record (${error.message})`;
+            setTimeout(() => {
+              if (fallbackUrl) {
+                window.location.href = fallbackUrl;
+              }
+            }, 5000); // Redirect after 5 seconds
           });
       },
       (error) => {
         // Handle Geolocation errors
         console.error('Geolocation error:', error);
-        if (fallbackUrl) {
-          window.location.href = fallbackUrl;
-        } else {
-          document.getElementById('status').innerText = 'Error retrieving GPS coordinates: ' + error.message;
-        }
+        document.getElementById('status').innerText = 'Error retrieving GPS coordinates: ' + error.message;
+        setTimeout(() => {
+          if (fallbackUrl) {
+            window.location.href = fallbackUrl;
+          }
+        }, 5000); // Redirect after 5 seconds
       }
     );
   </script>
