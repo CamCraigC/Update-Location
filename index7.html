@@ -11,11 +11,10 @@
     <h1>Acquiring Your Location...</h1>
     <p id="status">Please wait while we update your record.</p>
     <h3>Your Location Details:</h3>
-    <pre id="location-output"></pre> <!-- Displays latitude and longitude -->
+    <pre id="location-output"></pre>
     <h3>JSON Payload Sent:</h3>
-    <pre id="json-output"></pre> <!-- Displays the outgoing JSON payload -->
+    <pre id="json-output"></pre>
     <script>
-      // Parse the recordId and authorization code from the URL's query parameters.
       const params = new URLSearchParams(window.location.search);
       const recordId = params.get('recordId');
       const authCode = params.get('authCode');
@@ -25,63 +24,49 @@
       } else if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const latitude = position.coords.latitude.toFixed(6); // Ensure consistent formatting
+            const latitude = position.coords.latitude.toFixed(6);
             const longitude = position.coords.longitude.toFixed(6);
 
-            // Display the location details on the screen
             document.getElementById('location-output').innerText = `Latitude: ${latitude}\nLongitude: ${longitude}`;
 
-            // Construct the CORS Anywhere endpoint
-            const corsAnywhere = 'https://cors-anywhere.herokuapp.com/';
-            const updateEndpoint = `${corsAnywhere}https://rest.method.me/api/v1/tables/CustomSchedule/${recordId}`;
+            // Replace the URL with your Render API endpoint
+            const updateEndpoint = `https://location-api-mkpl.onrender.com/update?recordId=${recordId}&authCode=${authCode}`;
 
-            // Create the JSON payload to be sent
             const payload = {
               ActualStartLatitude: latitude.toString(),
               ActualStartLongitude: longitude.toString()
             };
 
-            // Display the JSON payload on the webpage
             document.getElementById('json-output').innerText = JSON.stringify(payload, null, 2);
 
-            // Make the PATCH request to update the record.
             fetch(updateEndpoint, {
               method: 'PATCH',
               headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `APIKey ${authCode}`,
-                'X-Requested-With': 'XMLHttpRequest' // Added header required by cors-anywhere
+                'Content-Type': 'application/json'
               },
-              body: JSON.stringify(payload) // Send the payload
+              body: JSON.stringify(payload)
             })
             .then(response => {
-              console.log('Response Status:', response.status); // Log the HTTP status code
-
-              // Check if the response is successful
               if (response.status === 204) {
                 document.getElementById('status').innerText = 'Record updated successfully!';
-                window.close(); // Close the page on success
+                window.close();
               } else {
-                return response.json()
+                response.json()
                   .then(data => {
-                    console.error('API Error:', data);
                     document.getElementById('status').innerText = `Error updating record: ${JSON.stringify(data, null, 2)}`;
                   })
                   .catch(() => {
                     response.text().then(text => {
-                      console.error('Response Text:', text); // Log non-JSON response
                       document.getElementById('status').innerText = `Error updating record: ${text}`;
                     });
                   });
               }
             })
             .catch(error => {
-              console.error('Fetch Error:', error);
               document.getElementById('status').innerText = 'Error: Unable to update record.';
             });
           },
           (error) => {
-            console.error('Error obtaining location:', error);
             document.getElementById('status').innerText = `Error obtaining location: ${error.message}`;
           },
           {
