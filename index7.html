@@ -1,83 +1,99 @@
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Updating Your Record...</title>
-    <style>
-      body { font-family: Arial, sans-serif; text-align: center; padding-top: 2em; }
-      #location-output, #json-output { margin-top: 1em; font-family: Courier, monospace; color: #333; white-space: pre-wrap; }
-    </style>
-  </head>
-  <body>
-    <h1>Acquiring Your Location...</h1>
-    <p id="status">Please wait while we update your record.</p>
-    <h3>Your Location Details:</h3>
-    <pre id="location-output"></pre>
-    <h3>JSON Payload Sent:</h3>
-    <pre id="json-output"></pre>
-    <script>
-      const params = new URLSearchParams(window.location.search);
-      const recordId = params.get('recordId');
-      const authCode = params.get('authCode');
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Updating Your Location</title>
+</head>
+<body>
+  <h1>Acquiring Your Location...</h1>
+  <p id="status">Please wait while we update your location.</p>
 
-      if (!recordId || !authCode) {
-        document.getElementById('status').innerText = 'Error: Missing required parameters.';
-      } else if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const latitude = position.coords.latitude.toFixed(6);
-            const longitude = position.coords.longitude.toFixed(6);
+  <div id="location-details" style="display: none;">
+    <h2>Your Location Details:</h2>
+    <p>Latitude: <span id="latitude">N/A</span></p>
+    <p>Longitude: <span id="longitude">N/A</span></p>
+  </div>
 
-            document.getElementById('location-output').innerText = `Latitude: ${latitude}\nLongitude: ${longitude}`;
+  <script>
+    // Extract variables from Method:CRM's URL (assumes these are passed in the URL)
+    const queryParams = new URLSearchParams(window.location.search);
+    const recordId = queryParams.get('recordId');
+    const authCode = queryParams.get('authCode');
+    const fallbackUrl = queryParams.get('fallbackUrl');
 
-            // Replace the URL with your Render API endpoint
-            const updateEndpoint = "https://location-api-mkpl.onrender.com";
+    // Use the Geolocation API to retrieve the user's GPS coordinates
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
 
-            const payload = {
-              ActualStartLatitude: latitude.toString(),
-              ActualStartLongitude: longitude.toString()
-            };
+        // Update the location details on the page
+        document.getElementById('location-details').style.display = 'block';
+        document.getElementById('latitude').innerText = latitude;
+        document.getElementById('longitude').innerText = longitude;
 
-            document.getElementById('json-output').innerText = JSON.stringify(payload, null, 2);
+        // Prepare the payload for the Render API
+        const updateEndpoint = "https://location-api-mkpl.onrender.com"; // Updated to root endpoint
+        const payload = {
+          recordId,
+          authCode,
+          ActualStartLatitude: latitude,
+          ActualStartLongitude: longitude
+        };
 
-            fetch(updateEndpoint, {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(payload)
-            })
-            .then(response => {
-              if (response.status === 204) {
-                document.getElementById('status').innerText = 'Record updated successfully!';
-                window.close();
+        // Send the payload to Render API
+        fetch(updateEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
+          .then(async (response) => {
+            if (response.ok) {
+              // Successful response from Render API
+              const data = await response.json();
+              console.log('Success:', data);
+
+              // Navigate back to the app using fallbackUrl
+              if (fallbackUrl) {
+                window.location.href = fallbackUrl;
               } else {
-                response.json()
-                  .then(data => {
-                    document.getElementById('status').innerText = `Error updating record: ${JSON.stringify(data, null, 2)}`;
-                  })
-                  .catch(() => {
-                    response.text().then(text => {
-                      document.getElementById('status').innerText = `Error updating record: ${text}`;
-                    });
-                  });
+                document.getElementById('status').innerText = 'Record updated successfully!';
               }
-            })
-            .catch(error => {
-              document.getElementById('status').innerText = 'Error: Unable to update record.';
-            });
-          },
-          (error) => {
-            document.getElementById('status').innerText = `Error obtaining location: ${error.message}`;
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          }
-        );
-      } else {
-        document.getElementById('status').innerText = 'Geolocation is not supported by your browser.';
+            } else {
+              // Handle API errors
+              const errorText = await response.text();
+              console.error('Error updating record:', errorText);
+
+              // Navigate back to the app with fallbackUrl on error
+              if (fallbackUrl) {
+                window.location.href = fallbackUrl;
+              } else {
+                document.getElementById('status').innerText = `Error updating record: ${errorText}`;
+              }
+            }
+          })
+          .catch((error) => {
+            // Handle network or fetch errors
+            console.error('Fetch error:', error);
+            if (fallbackUrl) {
+              window.location.href = fallbackUrl;
+            } else {
+              document.getElementById('status').innerText = `Error: Unable to update record (${error.message})`;
+            }
+          });
+      },
+      (error) => {
+        // Handle Geolocation errors
+        console.error('Geolocation error:', error);
+        if (fallbackUrl) {
+          window.location.href = fallbackUrl;
+        } else {
+          document.getElementById('status').innerText = 'Error retrieving GPS coordinates: ' + error.message;
+        }
       }
-    </script>
-  </body>
+    );
+  </script>
+</body>
 </html>
