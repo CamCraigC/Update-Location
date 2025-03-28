@@ -78,49 +78,50 @@
           .then(async (response) => {
             if (response.ok) {
               console.log('Record updated successfully.');
-              // Prioritize deeplink for redirection
-              if (deeplink) {
-                window.location.href = deeplink;
-              } else if (fallbackUrl) {
-                window.location.href = fallbackUrl;
+              // Attempt to close the current window
+              if (deeplink || fallbackUrl) {
+                // Use deeplink if provided; otherwise use fallbackUrl
+                window.location.href = deeplink || fallbackUrl;
               } else {
-                // Close the current window if no deeplink or fallback URL is available
-                window.close();
+                const closed = window.close(); // Attempt to close
+                if (!closed) {
+                  console.warn('Unable to close the window automatically.');
+                }
               }
             } else {
               const errorText = await response.text();
               console.error('Error updating record:', errorText);
-              if (deeplink) {
-                window.location.href = deeplink;
-              } else if (fallbackUrl) {
-                window.location.href = fallbackUrl;
+              if (deeplink || fallbackUrl) {
+                window.location.href = deeplink || fallbackUrl;
               } else {
-                // Close the current window
-                window.close();
+                const closed = window.close();
+                if (!closed) {
+                  console.warn('Unable to close the window automatically.');
+                }
               }
             }
           })
           .catch((error) => {
             console.error('Fetch error:', error);
-            if (deeplink) {
-              window.location.href = deeplink;
-            } else if (fallbackUrl) {
-              window.location.href = fallbackUrl;
+            if (deeplink || fallbackUrl) {
+              window.location.href = deeplink || fallbackUrl;
             } else {
-              // Close the current window
-              window.close();
+              const closed = window.close();
+              if (!closed) {
+                console.warn('Unable to close the window automatically.');
+              }
             }
           });
       },
       (error) => {
         console.error('Geolocation error:', error);
-        if (deeplink) {
-          window.location.href = deeplink;
-        } else if (fallbackUrl) {
-          window.location.href = fallbackUrl;
+        if (deeplink || fallbackUrl) {
+          window.location.href = deeplink || fallbackUrl;
         } else {
-          // Close the current window
-          window.close();
+          const closed = window.close();
+          if (!closed) {
+            console.warn('Unable to close the window automatically.');
+          }
         }
       }
     );
