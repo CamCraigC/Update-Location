@@ -42,6 +42,7 @@
     const latitudeField = queryParams.get('LatitudeFieldName');
     const longitudeField = queryParams.get('LongitudeFieldName');
     const fallbackUrl = queryParams.get('FallbackURL');
+    const deeplink = queryParams.get('Deeplink');
 
     // Use the Geolocation API to retrieve the user's GPS coordinates
     navigator.geolocation.getCurrentPosition(
@@ -76,49 +77,53 @@
         })
           .then(async (response) => {
             if (response.ok) {
-              const data = await response.json();
-              console.log('Success:', data);
-              document.getElementById('status').innerText = 'Record updated successfully!';
-              setTimeout(() => {
-                if (fallbackUrl) {
-                  window.location.href = fallbackUrl;
-                }
-              }, 3000); // Redirect after 3 seconds
+              console.log('Record updated successfully.');
+              // Prioritize deeplink for redirection
+              if (deeplink) {
+                window.location.href = deeplink;
+              } else if (fallbackUrl) {
+                window.location.href = fallbackUrl;
+              } else {
+                // Close the current window if no deeplink or fallback URL is available
+                window.close();
+              }
             } else {
               const errorText = await response.text();
               console.error('Error updating record:', errorText);
-              document.getElementById('status').innerText = `Error updating record: ${errorText}`;
-              setTimeout(() => {
-                if (fallbackUrl) {
-                  window.location.href = fallbackUrl;
-                }
-              }, 5000); // Redirect after 5 seconds
+              if (deeplink) {
+                window.location.href = deeplink;
+              } else if (fallbackUrl) {
+                window.location.href = fallbackUrl;
+              } else {
+                // Close the current window
+                window.close();
+              }
             }
           })
           .catch((error) => {
             console.error('Fetch error:', error);
-            document.getElementById('status').innerText = `Error: Unable to update record (${error.message})`;
-            setTimeout(() => {
-              if (fallbackUrl) {
-                window.location.href = fallbackUrl;
-              }
-            }, 5000); // Redirect after 5 seconds
+            if (deeplink) {
+              window.location.href = deeplink;
+            } else if (fallbackUrl) {
+              window.location.href = fallbackUrl;
+            } else {
+              // Close the current window
+              window.close();
+            }
           });
       },
       (error) => {
         console.error('Geolocation error:', error);
-        document.getElementById('status').innerText = 'Error retrieving GPS coordinates: ' + error.message;
-        setTimeout(() => {
-          if (fallbackUrl) {
-            window.location.href = fallbackUrl;
-          }
-        }, 5000); // Redirect after 5 seconds
+        if (deeplink) {
+          window.location.href = deeplink;
+        } else if (fallbackUrl) {
+          window.location.href = fallbackUrl;
+        } else {
+          // Close the current window
+          window.close();
+        }
       }
     );
-  </script>
-</body>
-</html>
-
   </script>
 </body>
 </html>
