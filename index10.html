@@ -24,7 +24,7 @@
   </style>
 </head>
 <body>
-  <h1>Updating Your Location...</h1>
+  <h1>Acquiring Your Location...</h1>
   <p id="status">Please wait while we update your location.</p>
 
   <div id="location-details" style="display: none;">
@@ -34,11 +34,14 @@
   </div>
 
   <script>
-    // Extract variables from Method:CRM's URL (assumes these are passed in the URL)
+    // Extract variables from the URL
     const queryParams = new URLSearchParams(window.location.search);
-    const recordId = queryParams.get('recordId');
-    const authCode = queryParams.get('authCode');
-    const fallbackUrl = queryParams.get('fallbackUrl');
+    const recordId = queryParams.get('RecordID');
+    const authCode = queryParams.get('AuthCode');
+    const table = queryParams.get('TableName');
+    const latitudeField = queryParams.get('LatitudeFieldName');
+    const longitudeField = queryParams.get('LongitudeFieldName');
+    const fallbackUrl = queryParams.get('FallbackURL');
 
     // Use the Geolocation API to retrieve the user's GPS coordinates
     navigator.geolocation.getCurrentPosition(
@@ -51,16 +54,19 @@
         document.getElementById('latitude').innerText = latitude;
         document.getElementById('longitude').innerText = longitude;
 
-        // Prepare the payload for the Render API
-        const updateEndpoint = "https://location-api-mkpl.onrender.com"; // Updated to root endpoint
+        // Prepare the payload
+        const updateEndpoint = "https://location-api-mkpl.onrender.com";
         const payload = {
           recordId,
           authCode,
-          ActualStartLatitude: latitude,
-          ActualStartLongitude: longitude
+          table,
+          latitudeField,
+          longitudeField,
+          latitudeValue: String(latitude), // Send as strings
+          longitudeValue: String(longitude), // Send as strings
         };
 
-        // Send the payload to Render API
+        // Send the payload to the API
         fetch(updateEndpoint, {
           method: 'POST',
           headers: {
@@ -70,7 +76,6 @@
         })
           .then(async (response) => {
             if (response.ok) {
-              // Successful response from Render API
               const data = await response.json();
               console.log('Success:', data);
               document.getElementById('status').innerText = 'Record updated successfully!';
@@ -80,7 +85,6 @@
                 }
               }, 3000); // Redirect after 3 seconds
             } else {
-              // Handle API errors
               const errorText = await response.text();
               console.error('Error updating record:', errorText);
               document.getElementById('status').innerText = `Error updating record: ${errorText}`;
@@ -92,7 +96,6 @@
             }
           })
           .catch((error) => {
-            // Handle network or fetch errors
             console.error('Fetch error:', error);
             document.getElementById('status').innerText = `Error: Unable to update record (${error.message})`;
             setTimeout(() => {
@@ -103,7 +106,6 @@
           });
       },
       (error) => {
-        // Handle Geolocation errors
         console.error('Geolocation error:', error);
         document.getElementById('status').innerText = 'Error retrieving GPS coordinates: ' + error.message;
         setTimeout(() => {
@@ -113,6 +115,10 @@
         }, 5000); // Redirect after 5 seconds
       }
     );
+  </script>
+</body>
+</html>
+
   </script>
 </body>
 </html>
